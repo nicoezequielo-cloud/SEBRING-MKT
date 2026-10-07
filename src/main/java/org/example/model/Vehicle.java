@@ -1,16 +1,21 @@
 package org.example.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import org.example.model.enums.FuelType;
 import org.example.model.enums.Transmission;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "vehicles")
@@ -51,11 +56,15 @@ public class Vehicle {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Lob
+    @Column(columnDefinition = "text")
     private String description;
 
     @Column(nullable = false)
     private String status;
+
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("sortOrder ASC, id ASC")
+    private List<VehicleImage> images = new ArrayList<>();
 
     public Integer getId() {
         return id;
@@ -167,5 +176,13 @@ public class Vehicle {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public List<VehicleImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<VehicleImage> images) {
+        this.images = images;
     }
 }

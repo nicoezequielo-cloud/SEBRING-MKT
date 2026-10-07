@@ -1,8 +1,10 @@
 package org.example.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.dto.UserCreateRequest;
 import org.example.dto.UserUpdateRequest;
+import org.example.exception.ForbiddenException;
 import org.example.model.User;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
@@ -19,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static org.example.security.AuthSupport.requireAdmin;
+import static org.example.security.AuthSupport.requireUser;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -32,7 +37,8 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<User> getAllUsers(HttpServletRequest request) {
+        requireAdmin(request);
         return userRepository.findAll();
     }
 
@@ -50,8 +56,15 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Integer id, @Valid @RequestBody UserUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateUser(id, request));
+    public ResponseEntity<User> updateUser(@PathVariable Integer id,
+                                           @Valid @RequestBody UserUpdateRequest request,
+                                           HttpServletRequest httpRequest) {
+        User caller = requireUser(httpRequest);
+        boolean sameUser = caller.getId().equals(id);
+        if (!sameUser && !caller.isAdmin()) {
+            throw new ForbiddenException("Solo podés editar tu propio perfil");
+        }
+        return ResponseEntity.ok(userService.updateUser(id, request, caller.isAdmin()));
     }
 
     @DeleteMapping("/{id}")

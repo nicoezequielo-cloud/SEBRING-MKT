@@ -1,9 +1,11 @@
 package org.example.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.dto.TransactionCreateRequest;
 import org.example.dto.TransactionUpdateRequest;
 import org.example.model.Transaction;
+import org.example.model.User;
 import org.example.repository.TransactionRepository;
 import org.example.service.TransactionService;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static org.example.security.AuthSupport.requireUser;
+
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
@@ -32,8 +36,13 @@ public class TransactionController {
     }
 
     @GetMapping
-    public List<Transaction> getAllTransactions() {
-        return transactionRepository.findAll();
+    public List<Transaction> getAllTransactions(HttpServletRequest request) {
+        User user = requireUser(request);
+        List<Transaction> all = transactionRepository.findAll();
+        if (user.isAdmin()) {
+            return all;
+        }
+        return all.stream().filter(t -> t.getUserId().equals(user.getId())).toList();
     }
 
     @GetMapping("/{id}")

@@ -23,9 +23,9 @@ public class Main {
             createVehiclesTable(conn);
             createTransactionsTable(conn);
 
-            insertUser(conn, "Alice", "Smith", "alice@example.com", "secret123", "1122334455", "12345678", false, true);
-            insertUser(conn, "Bob", "Jones", "bob@example.com", "secret456", "1199887766", "87654321", true, true);
-            insertUser(conn, "Carla", "Gomez", "carla.gomez@example.com", "carla2024", "1155667788", "30111222", false, true);
+            insertUser(conn, "Alice", "Smith", "alice", "alice@example.com", "secret123", "1122334455", "12345678", false, true);
+            insertUser(conn, "Bob", "Jones", "bob", "bob@example.com", "secret456", "1199887766", "87654321", true, true);
+            insertUser(conn, "Carla", "Gomez", "carla", "carla.gomez@example.com", "carla2024", "1155667788", "30111222", false, true);
 
             if (countRows(conn, "vehicles") == 0) {
                 insertSampleVehicles(conn);
@@ -69,6 +69,7 @@ public class Main {
                 first_name VARCHAR(100) NOT NULL,
                 last_name VARCHAR(100) NOT NULL,
                 email VARCHAR(100) UNIQUE NOT NULL,
+                username VARCHAR(50) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 phone VARCHAR(20),
                 national_id VARCHAR(20),
@@ -83,23 +84,24 @@ public class Main {
         }
     }
 
-    private static void insertUser(Connection conn, String firstName, String lastName, String email,
+    private static void insertUser(Connection conn, String firstName, String lastName, String username, String email,
                                    String password, String phone, String nationalId,
                                    boolean isAdmin, boolean active) throws SQLException {
         String sql = """
-            INSERT INTO users (first_name, last_name, email, password, phone, national_id, is_admin, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO users (first_name, last_name, username, email, password, phone, national_id, is_admin, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (email) DO NOTHING;
         """;
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, firstName);
             pstmt.setString(2, lastName);
-            pstmt.setString(3, email);
-            pstmt.setString(4, password);
-            pstmt.setString(5, phone);
-            pstmt.setString(6, nationalId);
-            pstmt.setBoolean(7, isAdmin);
-            pstmt.setBoolean(8, active);
+            pstmt.setString(3, username);
+            pstmt.setString(4, email);
+            pstmt.setString(5, password);
+            pstmt.setString(6, phone);
+            pstmt.setString(7, nationalId);
+            pstmt.setBoolean(8, isAdmin);
+            pstmt.setBoolean(9, active);
 
             int rowsInserted = pstmt.executeUpdate();
             if (rowsInserted > 0) {
@@ -112,7 +114,7 @@ public class Main {
 
     private static void readUsers(Connection conn) throws SQLException {
         String sql = """
-            SELECT id, first_name, last_name, email, phone, national_id, is_admin, registration_date, active
+            SELECT id, first_name, last_name, email, username, phone, national_id, is_admin, registration_date, active
             FROM users
             ORDER BY id ASC;
         """;
@@ -123,10 +125,11 @@ public class Main {
 
             while (rs.next()) {
                 System.out.printf(
-                        "[%d] %s %s | %s | phone: %s | ID: %s | admin: %b | registered: %s | active: %b%n",
+                        "[%d] %s %s | %s | user: %s | phone: %s | ID: %s | admin: %b | registered: %s | active: %b%n",
                         rs.getInt("id"), rs.getString("first_name"), rs.getString("last_name"),
-                        rs.getString("email"), rs.getString("phone"), rs.getString("national_id"),
-                        rs.getBoolean("is_admin"), rs.getTimestamp("registration_date"), rs.getBoolean("active")
+                        rs.getString("email"), rs.getString("username"), rs.getString("phone"),
+                        rs.getString("national_id"), rs.getBoolean("is_admin"),
+                        rs.getTimestamp("registration_date"), rs.getBoolean("active")
                 );
             }
         }

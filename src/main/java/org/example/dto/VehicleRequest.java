@@ -99,11 +99,11 @@ public class VehicleRequest {
         this.stock = stock;
     }
 
-    public String getTransmission() {
+    public Transmission getTransmission() {
         return transmission;
     }
 
-    public void setTransmission(String transmission) {
+    public void setTransmission(Transmission transmission) {
         this.transmission = transmission;
     }
 
